@@ -1,3 +1,7 @@
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
@@ -8,7 +12,7 @@ resource "azurerm_resource_group" "rg" {
 resource "azurerm_virtual_network" "net" {
   name                = "vm-net"
   address_space       = ["192.168.0.0/24"]
-  location            = resource_group_name.rg.location
+  location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 resource "azurerm_subnet" "internal" {
@@ -74,7 +78,7 @@ resource "azurerm_network_interface" "control_nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.internal.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.control_ip.ip
+    public_ip_address_id          = azurerm_public_ip.control_ip.id
   }
 }
 resource "azurerm_network_interface" "nodes_nic" {
@@ -159,17 +163,24 @@ resource "azurerm_linux_virtual_machine" "nodes" {
 }
 # Generate a Dynamic Ansible Inventory File
 resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/Ansible/inventory.tmpl", {
-    control_ip   = azurerm_public_ip.control_ip.ip_address
-    node1_ip     = azurerm_public_ip.nodes[0].ip_address
-    node2_ip     = azurerm_public_ip.nodes[1].ip_address
-    control_name = azurerm_public_ip.control_ip.name
-    node1_name   = azurerm_public_ip.nodes[0].name
-    node2_name   = azurerm_public_ip.nodes[1].name
-    ssh_user     = var.admin_username
-    ssh_key      = "ansible_ssh_private_key_file=${abspath("${path.module}/vm_ssh_key")}"
+  content = templatefile("../Ansible/inventory.tmpl", {
+    control_ip           = azurerm_public_ip.control_ip.public_ip
+    control_name         = azurerm_public_ip.control_ip.name
+    ssh_private_key_path = "${path.module}/vm_ssh_key"
+    nodes = [
+      {
+        name = azurerm_linux_virtual_machine.nodes[0].name
+        ip   = azurerm_linux_virtual_machine.nodes[0].public_ip
+      },
+      {
+        name = azurerm_linux_virtual_machine.nodes[1].name
+        ip   = azurerm_linux_virtual_machine.nodes[1].public_ip
+      }
+    ]
+    ssh_user = var.admin_username
+    ssh_key  = "ansible_ssh_private_key_file=${abspath("${path.module}/vm_ssh_key")}"
   })
-  filename = "${path.module}/Ansible/inventory.ini"
+  filename = "../Ansible/inventory.ini"
 }
 resource "local_file" "ssh_private_key" {
   content         = tls_private_key.vm_ssh.private_key_openssh
