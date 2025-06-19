@@ -1,0 +1,9 @@
+[control]
+{control_name} ansible_host=${control_ip} ansible_user=${ssh_user} ${ssh_key}
+
+[nodes]
+{node1_name} ansible_host=${node1_ip} ansible_user=${ssh_user} ${ssh_key}
+{node2_name} ansible_host=${node2_ip} ansible_user=${ssh_user} ${ssh_key}
+
+[all:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'

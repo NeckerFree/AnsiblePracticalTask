@@ -22,30 +22,34 @@ resource "azurerm_network_security_group" "nsg" {
   name                = "vm-nsg"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+}
 
-  security_rule = {
-    name                       = "SSH"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
+resource "azurerm_network_security_rule" "ssh" {
+  name                        = "SSH"
+  priority                    = 1001
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg.name
+}
 
-  #   security_rule = {
-  #     name                       = "InternetOut"
-  #     priority                   = 100
-  #     direction                  = "Outbound"
-  #     access                     = "Allow"
-  #     protocol                   = "Tcp"
-  #     source_port_range          = "*"
-  #     destination_port_range     = "80"
-  #     source_address_prefix      = "*"
-  #     destination_address_prefix = "*"
-  #   }
+resource "azurerm_network_security_rule" "internet_out" {
+  name                        = "InternetOut"
+  priority                    = 100
+  direction                   = "Outbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "80"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg.name
 }
 resource "azurerm_public_ip" "control_ip" {
   name                = "control-ip"
@@ -70,8 +74,7 @@ resource "azurerm_network_interface" "control_nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.internal.id
     private_ip_address_allocation = "Dynamic"
-    #private_ip_address            = "192.168.0.100"
-    public_ip_address_id = azurerm_public_ip.control_ip.ip
+    public_ip_address_id          = azurerm_public_ip.control_ip.ip
   }
 }
 resource "azurerm_network_interface" "nodes_nic" {
@@ -84,8 +87,7 @@ resource "azurerm_network_interface" "nodes_nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.internal.id
     private_ip_address_allocation = "Dynamic"
-    #private_ip_address            = "192.168.0.${101 + count.index}"
-    public_ip_address_id = azurerm_public_ip.nodes[count.index].id
+    public_ip_address_id          = azurerm_public_ip.nodes[count.index].id
   }
 }
 # Associate NSG with NICs
@@ -155,36 +157,22 @@ resource "azurerm_linux_virtual_machine" "nodes" {
     version   = "latest"
   }
 }
-
-# Configuration of /etc/hosts and SSH config
-# resource "null_resource" "configure_hosts" {
-#   depends_on = [
-#     azurerm_linux_virtual_machine.control,
-#     azurerm_linux_virtual_machine.nodes
-#   ]
-#   connection {
-#     type        = "ssh"
-#     host        = azurerm_linux_virtual_machine.control.public_ip_address
-#     user        = var.admin_username
-#     private_key = tls_private_key.vm_ssh.private_key_openssh
-#   }
-#   #Provisioner to update /etc/hosts on control node
-#   provisioner "remote-exec" {
-#     inline = [
-#       "echo '192.168.0.100 control.example.com control' | sudo tee -a /etc/hosts",
-#       "echo '192.168.0.101 node1.example.com node1' | sudo tee -a /etc/hosts",
-#       "echo '192.168.0.102 node2.example.com node2' | sudo tee -a /etc/hosts",
-#     ]
-#   }
-#   # Provisioner to create SSH config on control node
-#   provisioner "file" {
-#     content     = <<-EOF
-#     Host node*
-#     StrickHostKeyChecking no
-#     UserKnownHostFile /dev/null
-#     User ${var.admin_username}
-#     IdentityFile ~/.ssh/id_rsa
-#   EOF
-#     destination = "home/${var.admin_username}/.ssh/config"
-#   }
-# }
+# Generate a Dynamic Ansible Inventory File
+resource "local_file" "ansible_inventory" {
+  content = templatefile("${path.module}/Ansible/inventory.tmpl", {
+    control_ip   = azurerm_public_ip.control_ip.ip_address
+    node1_ip     = azurerm_public_ip.nodes[0].ip_address
+    node2_ip     = azurerm_public_ip.nodes[1].ip_address
+    control_name = azurerm_public_ip.control_ip.name
+    node1_name   = azurerm_public_ip.nodes[0].name
+    node2_name   = azurerm_public_ip.nodes[1].name
+    ssh_user     = var.admin_username
+    ssh_key      = "ansible_ssh_private_key_file=${abspath("${path.module}/vm_ssh_key")}"
+  })
+  filename = "${path.module}/Ansible/inventory.ini"
+}
+resource "local_file" "ssh_private_key" {
+  content         = tls_private_key.vm_ssh.private_key_openssh
+  filename        = "${path.module}/vm_ssh_key"
+  file_permission = "0600"
+}
