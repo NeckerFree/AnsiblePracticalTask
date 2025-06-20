@@ -55,7 +55,7 @@ resource "azurerm_network_security_rule" "internet_out" {
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
-resource "azurerm_public_ip" "control_ip" {
+resource "azurerm_public_ip" "control" {
   name                = "control-ip"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
@@ -78,7 +78,7 @@ resource "azurerm_network_interface" "control_nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.internal.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.control_ip.id
+    public_ip_address_id          = azurerm_public_ip.control.id
   }
 }
 resource "azurerm_network_interface" "nodes_nic" {
@@ -164,17 +164,17 @@ resource "azurerm_linux_virtual_machine" "nodes" {
 # Generate a Dynamic Ansible Inventory File
 resource "local_file" "ansible_inventory" {
   content = templatefile("../Ansible/inventory.tmpl", {
-    control_ip           = azurerm_public_ip.control_ip.public_ip
-    control_name         = azurerm_public_ip.control_ip.name
+    control_name         = azurerm_linux_virtual_machine.control.name
+    control_ip           = azurerm_linux_virtual_machine.control.public_ip_address
     ssh_private_key_path = "${path.module}/vm_ssh_key"
     nodes = [
       {
         name = azurerm_linux_virtual_machine.nodes[0].name
-        ip   = azurerm_linux_virtual_machine.nodes[0].public_ip
+        ip   = azurerm_linux_virtual_machine.nodes[0].public_ip_address
       },
       {
         name = azurerm_linux_virtual_machine.nodes[1].name
-        ip   = azurerm_linux_virtual_machine.nodes[1].public_ip
+        ip   = azurerm_linux_virtual_machine.nodes[1].public_ip_address
       }
     ]
     ssh_user = var.admin_username

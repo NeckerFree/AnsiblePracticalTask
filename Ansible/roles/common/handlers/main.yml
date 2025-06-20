@@ -1,0 +1,7 @@
+---
+# Handlers for common role
+- name: restart sshd
+  service:
+    name: sshd
+    state: restarted
+  become: yes

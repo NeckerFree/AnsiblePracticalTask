@@ -1,0 +1,9 @@
+---
+# Main tasks file for common role
+- name: Include package installation tasks
+  include_tasks: packages.yml
+  when: required_packages | length > 0
+
+- name: Include SELinux tasks
+  include_tasks: selinux.yml
+  when: disable_selinux

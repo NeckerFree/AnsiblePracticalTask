@@ -1,0 +1,26 @@
+---
+# Disable SELinux
+- name: Check SELinux status
+  command: sestatus
+  register: selinux_status
+  changed_when: false
+  ignore_errors: true
+
+- name: Disable SELinux if enabled
+  block:
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+      become: true
+      register: selinux_disabled
+
+    - name: Reboot if SELinux was disabled
+      reboot:
+        msg: "Reboot initiated after disabling SELinux"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+      become: true
+      when: selinux_disabled is changed
+  when: "'disabled' not in selinux_status.stdout"

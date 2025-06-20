@@ -1,0 +1,12 @@
+---
+- name: Gather and display network interfaces
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Display network interfaces
+      debug:
+        msg: "Host {{ inventory_hostname }} has these interfaces: {{ ansible_interfaces }}"
+
+    - name: Display detailed IP information
+      debug:
+        var: ansible_facts.network_interfaces

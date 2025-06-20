@@ -1,0 +1,8 @@
+---
+# Install required packages
+- name: Install required packages
+  apt:
+    name: "{{ required_packages }}"
+    state: present
+    update_cache: true
+  become: true

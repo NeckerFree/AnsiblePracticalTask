@@ -15,7 +15,7 @@
     - name: Configure control node ssh
       hosts: control
       tasks:
-        - name: Create ~/.ssh directory if it doesnn't exist
+        - name: Create ~/.ssh directory if it doesn't exist
           file:
             path: ~/.ssh
             state: directory

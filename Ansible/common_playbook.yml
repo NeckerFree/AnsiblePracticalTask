@@ -1,0 +1,18 @@
+---
+- name: Apply common configuration to all nodes
+  hosts: managed_nodes
+  become: yes
+  vars:
+    required_packages:
+      - curl
+      - lsof
+      - mc
+      - nano
+      - tar
+      - unzip
+      - vim
+      - zip
+    disable_selinux: true  # Set to false if you don't want to disable SELinux
+
+  roles:
+    - common
