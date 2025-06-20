@@ -166,7 +166,7 @@ resource "local_file" "ansible_inventory" {
   content = templatefile("../Ansible/inventory.tmpl", {
     control_name         = azurerm_linux_virtual_machine.control.name
     control_ip           = azurerm_linux_virtual_machine.control.public_ip_address
-    ssh_private_key_path = "${path.module}/vm_ssh_key"
+    ssh_private_key_path = "${abspath("../Ansible/vm_ssh_key")}"
     nodes = [
       {
         name = azurerm_linux_virtual_machine.nodes[0].name
@@ -178,12 +178,12 @@ resource "local_file" "ansible_inventory" {
       }
     ]
     ssh_user = var.admin_username
-    ssh_key  = "ansible_ssh_private_key_file=${abspath("${path.module}/vm_ssh_key")}"
+    ssh_key  = "ansible_ssh_private_key_file=${abspath("../Ansible/vm_ssh_key")}"
   })
   filename = "../Ansible/inventory.ini"
 }
 resource "local_file" "ssh_private_key" {
   content         = tls_private_key.vm_ssh.private_key_openssh
-  filename        = "${path.module}/vm_ssh_key"
+  filename        = "../Ansible/vm_ssh_key"
   file_permission = "0600"
 }

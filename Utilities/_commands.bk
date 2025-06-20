@@ -1,20 +1,13 @@
-#File version 1.0
-Verify SSH:
-ssh username@linux-control-machine
+#File version 2.0
 Setup Infra:
 # Copy both files at once (replace paths and IP)
-scp -r .\ANSIBLE\ username@linux-control-machine:/home/<USER>/
 scp -i C:\path\to\vm_ssh_key C:\path\to\setup-infra.yml C:\path\to\inventory.ini <USER>@<PUBLIC_IP>:/home/<USER>/
 ls -l setup-infra.yml inventory.ini
-
-Validate copied files:
-ls -l /home/<USER>/ANSIBLE
-tree /home/<USER>/ANSIBLE
 
 ansible-playbook -i inventory.ini setup-infra.yml
 
 Task 1:
-1. SSH to control.example.com 
+1. SSH to control.example.com (Local)
 ssh -i vm_ssh_key <USER>@<PUBLIC_IP>
 Run: 
 sudo apt update
@@ -31,6 +24,14 @@ Edit your inventory file (../Ansible/inventory.ini) and add:
 [managed_nodes]
 node1.example.com
 node2.example.com
+
+3.1. 
+scp -r .\Ansible\ username@linux-control-machine:/home/<USER>/
+
+3.2.
+Validate copied files:
+ls -l /home/<USER>/Ansible
+tree /home/<USER>/Ansible
 
 4. Verify with ad hoc commands
 ansible managed_nodes -m setup -a "filter=ansible_hostname"
