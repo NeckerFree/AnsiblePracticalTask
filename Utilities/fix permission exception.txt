@@ -1,0 +1,8 @@
+icacls vm_ssh_key /reset
+icacls vm_ssh_key /inheritance:r
+icacls vm_ssh_key /remove "BUILTIN\Usuarios"
+icacls vm_ssh_key /remove "NT AUTHORITY\Authenticated Users"
+icacls vm_ssh_key /remove "BUILTIN\Administradores"  
+icacls vm_ssh_key /grant:r "$($env:USERNAME):(R)"
+icacls vm_ssh_key /grant:r "NT AUTHORITY\SYSTEM:(R)"
+icacls vm_ssh_key

@@ -1,12 +1,13 @@
 ---
 - name: Gather and display network interfaces
   hosts: all
-  gather_facts: true
+  gather_facts: true  # This must be true to collect network facts
   tasks:
     - name: Display network interfaces
       debug:
-        msg: "Host {{ inventory_hostname }} has these interfaces: {{ ansible_interfaces }}"
+        msg: "Host {{ inventory_hostname }} has these interfaces: {{ ansible_facts.interfaces }}"
 
     - name: Display detailed IP information
       debug:
-        var: ansible_facts.network_interfaces
+        var: ansible_facts
+      when: ansible_facts is defined

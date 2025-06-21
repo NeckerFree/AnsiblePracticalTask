@@ -124,14 +124,14 @@ resource "azurerm_linux_virtual_machine" "control" {
   }
   os_disk {
     caching              = "ReadWrite"
-    disk_size_gb         = 10
+    disk_size_gb         = 30
     storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "22_04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 }
@@ -150,14 +150,14 @@ resource "azurerm_linux_virtual_machine" "nodes" {
   }
   os_disk {
     caching              = "ReadWrite"
-    disk_size_gb         = 10
+    disk_size_gb         = 30
     storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "22_04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 }

@@ -1,15 +1,21 @@
 ---
-# Disable SELinux
-- name: Check SELinux status
+- name: Check if SELinux is installed
+  stat:
+    path: /usr/sbin/sestatus
+  register: selinux_installed
+  changed_when: false
+
+- name: Check SELinux status (when installed)
   command: sestatus
   register: selinux_status
   changed_when: false
   ignore_errors: true
+  when: selinux_installed.stat.exists
 
-- name: Disable SELinux if enabled
+- name: Disable SELinux if enabled and installed
   block:
     - name: Disable SELinux
-      selinux:
+      ansible.posix.selinux:
         state: disabled
       become: true
       register: selinux_disabled
@@ -23,4 +29,6 @@
         post_reboot_delay: 30
       become: true
       when: selinux_disabled is changed
-  when: "'disabled' not in selinux_status.stdout"
+  when:
+    - selinux_installed.stat.exists
+    - "'disabled' not in selinux_status.stdout|default('')"
